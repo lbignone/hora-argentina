@@ -314,7 +314,7 @@ def main():
     st.subheader("Desarrollado por:")
     st.write("""
     - [Dr. Lucas A. Bignone](https://lucasbignone.com.ar/) ([Instituto de Astronomía y Física del Espacio, CONICET-UBA](www.iafe.uba.ar))
-    - Código fuente disponible en [GitHub]()
+    - Código fuente disponible en [GitHub](https://github.com/lbignone/hora-argentina)
     """)
 
 
