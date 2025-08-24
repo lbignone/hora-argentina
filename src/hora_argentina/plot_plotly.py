@@ -191,21 +191,25 @@ def plot_sunrise_sunset_curves(
         midnight_time = datetime.combine(dummy_date.date(), datetime.min.time())
 
         # Calculate the maximum and minimum time range considering adjusted times
-        max_time_in_data = max([
-            df_plot["last_light_time"].max()
-            if not df_plot["last_light_time"].isna().all()
-            else midnight_time,
-            datetime.combine(
-                dummy_date.date(), datetime.max.time().replace(microsecond=0)
-            ),
-        ])
-        
-        min_time_in_data = min([
-            df_plot["first_light_time"].min()
-            if not df_plot["first_light_time"].isna().all()
-            else midnight_time,
-            midnight_time
-        ])
+        max_time_in_data = max(
+            [
+                df_plot["last_light_time"].max()
+                if not df_plot["last_light_time"].isna().all()
+                else midnight_time,
+                datetime.combine(
+                    dummy_date.date(), datetime.max.time().replace(microsecond=0)
+                ),
+            ]
+        )
+
+        min_time_in_data = min(
+            [
+                df_plot["first_light_time"].min()
+                if not df_plot["first_light_time"].isna().all()
+                else midnight_time,
+                midnight_time,
+            ]
+        )
 
         # Early night (last_light to max time in data or end of day)
         fig.add_trace(
@@ -387,42 +391,48 @@ def plot_sunrise_sunset_curves(
             # Set range to accommodate times that might go beyond 24 hours or be negative
             range=[
                 # Calculate min time from all time columns, allowing for negative times
-                min([
-                    df_plot["sunrise_time"].min()
-                    if not df_plot["sunrise_time"].isna().all()
-                    else datetime.combine(dummy_date.date(), datetime.min.time()),
-                    df_plot["sunset_time"].min()
-                    if not df_plot["sunset_time"].isna().all()
-                    else datetime.combine(dummy_date.date(), datetime.min.time()),
-                    df_plot["dawn_time"].min()
-                    if has_twilight and not df_plot["dawn_time"].isna().all()
-                    else datetime.combine(dummy_date.date(), datetime.min.time()),
-                    df_plot["first_light_time"].min()
-                    if has_astronomical_twilight
-                    and not df_plot["first_light_time"].isna().all()
-                    else datetime.combine(dummy_date.date(), datetime.min.time()),
-                    datetime.combine(dummy_date.date(), datetime.min.time()),  # fallback to start of day
-                ]),
+                min(
+                    [
+                        df_plot["sunrise_time"].min()
+                        if not df_plot["sunrise_time"].isna().all()
+                        else datetime.combine(dummy_date.date(), datetime.min.time()),
+                        df_plot["sunset_time"].min()
+                        if not df_plot["sunset_time"].isna().all()
+                        else datetime.combine(dummy_date.date(), datetime.min.time()),
+                        df_plot["dawn_time"].min()
+                        if has_twilight and not df_plot["dawn_time"].isna().all()
+                        else datetime.combine(dummy_date.date(), datetime.min.time()),
+                        df_plot["first_light_time"].min()
+                        if has_astronomical_twilight
+                        and not df_plot["first_light_time"].isna().all()
+                        else datetime.combine(dummy_date.date(), datetime.min.time()),
+                        datetime.combine(
+                            dummy_date.date(), datetime.min.time()
+                        ),  # fallback to start of day
+                    ]
+                ),
                 # Calculate max time from all time columns, defaulting to end of day
-                max([
-                    df_plot["sunrise_time"].max()
-                    if not df_plot["sunrise_time"].isna().all()
-                    else datetime.combine(dummy_date.date(), datetime.min.time()),
-                    df_plot["sunset_time"].max()
-                    if not df_plot["sunset_time"].isna().all()
-                    else datetime.combine(dummy_date.date(), datetime.min.time()),
-                    df_plot["dusk_time"].max()
-                    if has_twilight and not df_plot["dusk_time"].isna().all()
-                    else datetime.combine(dummy_date.date(), datetime.min.time()),
-                    df_plot["last_light_time"].max()
-                    if has_astronomical_twilight
-                    and not df_plot["last_light_time"].isna().all()
-                    else datetime.combine(dummy_date.date(), datetime.min.time()),
-                    datetime.combine(
-                        dummy_date.date(),
-                        datetime.max.time().replace(microsecond=0),
-                    ),  # fallback to end of day
-                ]),
+                max(
+                    [
+                        df_plot["sunrise_time"].max()
+                        if not df_plot["sunrise_time"].isna().all()
+                        else datetime.combine(dummy_date.date(), datetime.min.time()),
+                        df_plot["sunset_time"].max()
+                        if not df_plot["sunset_time"].isna().all()
+                        else datetime.combine(dummy_date.date(), datetime.min.time()),
+                        df_plot["dusk_time"].max()
+                        if has_twilight and not df_plot["dusk_time"].isna().all()
+                        else datetime.combine(dummy_date.date(), datetime.min.time()),
+                        df_plot["last_light_time"].max()
+                        if has_astronomical_twilight
+                        and not df_plot["last_light_time"].isna().all()
+                        else datetime.combine(dummy_date.date(), datetime.min.time()),
+                        datetime.combine(
+                            dummy_date.date(),
+                            datetime.max.time().replace(microsecond=0),
+                        ),  # fallback to end of day
+                    ]
+                ),
             ],
         ),
         hovermode="x unified",
