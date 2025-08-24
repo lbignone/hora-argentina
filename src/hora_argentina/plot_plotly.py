@@ -438,7 +438,7 @@ def plot_sunrise_sunset_curves(
         hovermode="x unified",
         template="plotly_white",
         # width=800,
-        height=700,
+        height=450,
         margin=dict(l=30, r=30, t=50, b=50),
         showlegend=False,
         # Set locale to Spanish
