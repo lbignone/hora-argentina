@@ -159,7 +159,7 @@ def main():
         m,
         width=725,
         height=200,
-        returned_objects=["last_object_clicked", "last_clicked", "zoom"],
+        returned_objects=["last_clicked"],
     )
 
     # Handle map clicks
