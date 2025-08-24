@@ -1,3 +1,4 @@
+-e .
 altair==5.5.0
 astroplan==0.10.1
 astropy==7.1.0
