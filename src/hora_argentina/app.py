@@ -157,7 +157,7 @@ def main():
     # Display the map and capture interactions
     st_data = st_folium(
         m,
-        width=725,
+        use_container_width=True,
         height=200,
         returned_objects=["last_clicked"],
     )
