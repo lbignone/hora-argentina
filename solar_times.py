@@ -87,7 +87,7 @@ def decimal_hours_to_time_string(decimal_hours):
     return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
 
 
-def load_config(config_file="config.json"):
+def load_config(config_file="config.txt"):
     """Load configuration from JSON file."""
     try:
         with open(config_file, "r") as f:
@@ -145,7 +145,7 @@ def validate_config(config):
 def main():
     """Main function to calculate and display solar times."""
     # Check for command line argument for config file
-    config_file = sys.argv[1] if len(sys.argv) > 1 else "config.json"
+    config_file = sys.argv[1] if len(sys.argv) > 1 else "config.txt"
 
     # Load and validate configuration
     config = load_config(config_file)
@@ -183,7 +183,7 @@ def main():
     obliq_correction = obliq_corr(jc)
     var_y_value = var_y(jc)
     sun_decl = sun_declination(jc)
-    
+
     # Calculate hour angle (using standard solar elevation of -0.833°)
     hour_angle_value = hour_angle(latitude, jc, -0.833)
 

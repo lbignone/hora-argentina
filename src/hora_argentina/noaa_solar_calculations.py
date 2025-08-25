@@ -105,24 +105,21 @@ def equation_of_time(julian_century):
 
 def hour_angle(latitude, julian_century, solar_elevation):
     """Calculate the Hour Angle (in degrees) for given solar elevation."""
-    lat_rad = radians(latitude)
-    sd = radians(sun_declination(julian_century))
-    se = radians(solar_elevation)
-
-    HAarg = (sin(se) - sin(lat_rad) * sin(sd)) / (cos(lat_rad) * cos(sd))
-    if HAarg > 1:
-        HAarg = 1
-    elif HAarg < -1:
-        HAarg = -1
-
-    return degrees(acos(HAarg))  # in degrees
+    return degrees(
+        acos(
+            cos(radians(90.0 - solar_elevation))
+            / (cos(radians(latitude)) * cos(radians(sun_declination(julian_century))))
+            - tan(radians(latitude)) * tan(radians(sun_declination(julian_century)))
+        )
+    )
 
 
 def solar_noon(longitude, timezone_offset, julian_day):
-    """Calculate Solar Noon (in local time)."""
+    """Calculate Solar Noon time (in local time)."""
     jc = julian_century(julian_day)
     eq_time = equation_of_time(jc)
-    return (720 - 4.0 * longitude - eq_time + timezone_offset * 60) / 60
+    solar_noon_utc = (720 - 4.0 * longitude - eq_time) / 60.0  # in hours
+    return solar_noon_utc + timezone_offset  # in local time
 
 
 def sunrise(latitude, longitude, timezone_offset, julian_day, solar_elevation=-0.833):
@@ -130,7 +127,7 @@ def sunrise(latitude, longitude, timezone_offset, julian_day, solar_elevation=-0
     jc = julian_century(julian_day)
     ha = hour_angle(latitude, jc, solar_elevation)
     solar_noon_time = solar_noon(longitude, timezone_offset, julian_day)
-    return (solar_noon_time * 1440 - ha * 4.0) / 1440  # in hours
+    return solar_noon_time - ha / 15.0  # in hours
 
 
 def sunset(latitude, longitude, timezone_offset, julian_day, solar_elevation=-0.833):
