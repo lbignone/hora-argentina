@@ -1,0 +1,8 @@
+{
+  "date": "2025-01-01",
+  "time": "00:00:00",
+  "utc_offset": -3,
+  "latitude": -34.6037,
+  "longitude": -58.3816,
+  "comment": "Buenos Aires, Argentina coordinates with specific time"
+}
