@@ -1,4 +1,7 @@
+from datetime import date, datetime, timedelta
 from math import acos, asin, cos, degrees, radians, sin, tan
+
+import pandas as pd
 
 
 def julian_century(julian_day):
@@ -46,9 +49,9 @@ def sun_true_long(julian_century):
 
 def sun_apparent_long(julian_century):
     """Calculate the Sun's Apparent Longitude (in degrees)."""
-    O = sun_true_long(julian_century)
+    stl = sun_true_long(julian_century)
     omega = 125.04 - 1934.136 * julian_century
-    return O - 0.00569 - 0.00478 * sin(radians(omega))
+    return stl - 0.00569 - 0.00478 * sin(radians(omega))
 
 
 def mean_obliq_ecliptic(julian_century):
@@ -136,3 +139,145 @@ def sunset(latitude, longitude, timezone_offset, julian_day, solar_elevation=-0.
     ha = hour_angle(latitude, jc, solar_elevation)
     solar_noon_time = solar_noon(longitude, timezone_offset, julian_day)
     return solar_noon_time + ha / 15.0  # in hours
+
+
+def date_to_julian_day(target_date, utc_offset=0):
+    """Convert a date to Julian Day Number, considering local time."""
+    if isinstance(target_date, str):
+        # If it's just a date string (YYYY-MM-DD), assume noon local time
+        if len(target_date) == 10:
+            target_datetime = datetime.fromisoformat(target_date + "T12:00:00")
+        else:
+            target_datetime = datetime.fromisoformat(target_date)
+    elif isinstance(target_date, datetime):
+        target_datetime = target_date
+    else:
+        # If it's a date object, assume noon local time
+        target_datetime = datetime.combine(
+            target_date, datetime.min.time().replace(hour=12)
+        )
+
+    # Convert to UTC by subtracting the UTC offset
+    utc_datetime = target_datetime - timedelta(hours=utc_offset)
+
+    # Extract date and time components
+    year = utc_datetime.year
+    month = utc_datetime.month
+    day = utc_datetime.day
+    hour = utc_datetime.hour
+    minute = utc_datetime.minute
+    second = utc_datetime.second
+
+    # Julian Day calculation for the date part
+    a = (14 - month) // 12
+    y = year + 4800 - a
+    m = month + 12 * a - 3
+
+    jd_date = day + (153 * m + 2) // 5 + 365 * y + y // 4 - y // 100 + y // 400 - 32045
+
+    # Add the time fraction (convert time to fraction of a day)
+    time_fraction = (hour + minute / 60.0 + second / 3600.0) / 24.0
+
+    return jd_date + time_fraction - 0.5  # Subtract 0.5 because JD starts at noon
+
+
+def decimal_hours_to_time_string(decimal_hours):
+    """Convert decimal hours to HH:MM:SS format."""
+    if decimal_hours is None or pd.isna(decimal_hours):
+        return None
+
+    # Handle negative hours (wrap around midnight)
+    while decimal_hours < 0:
+        decimal_hours += 24
+    while decimal_hours >= 24:
+        decimal_hours -= 24
+
+    hours = int(decimal_hours)
+    minutes = int((decimal_hours - hours) * 60)
+    seconds = int(((decimal_hours - hours) * 60 - minutes) * 60)
+
+    return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
+
+
+def yearly_sun_times_dataframe(latitude, longitude, timezone_offset, year=None):
+    """
+    Calculate sunrise and sunset times for all twilight definitions for a full year.
+
+    Parameters:
+    -----------
+    latitude : float
+        Latitude in degrees (positive for North, negative for South)
+    longitude : float
+        Longitude in degrees (positive for East, negative for West)
+    timezone_offset : float
+        Timezone offset from UTC in hours (e.g., -3 for Argentina standard time)
+    year : int, optional
+        Year for calculations (default: current year)
+
+    Returns:
+    --------
+    pandas.DataFrame
+        DataFrame with columns:
+        - date: Date for each day of the year
+        - official_sunrise: Official sunrise time (decimal hours)
+        - official_sunset: Official sunset time (decimal hours)
+        - civil_sunrise: Civil twilight sunrise time (decimal hours)
+        - civil_sunset: Civil twilight sunset time (decimal hours)
+        - nautical_sunrise: Nautical twilight sunrise time (decimal hours)
+        - nautical_sunset: Nautical twilight sunset time (decimal hours)
+        - astronomical_sunrise: Astronomical twilight sunrise time (decimal hours)
+        - astronomical_sunset: Astronomical twilight sunset time (decimal hours)
+    """
+
+    # Use current year if none specified
+    if year is None:
+        year = date.today().year
+
+    # Twilight definitions (solar elevation angles in degrees)
+    twilight_angles = {
+        "official": -0.833,  # Sun's center at horizon, accounting for refraction
+        "civil": -6.0,  # Civil twilight
+        "nautical": -12.0,  # Nautical twilight
+        "astronomical": -18.0,  # Astronomical twilight
+    }
+
+    # Create date range for the year
+    start_date = date(year, 1, 1)
+    end_date = date(year, 12, 31)
+
+    # Initialize lists to store results
+    dates = []
+    results = {f"{twilight}_sunrise": [] for twilight in twilight_angles.keys()}
+    results.update({f"{twilight}_sunset": [] for twilight in twilight_angles.keys()})
+
+    # Calculate for each day of the year
+    current_date = start_date
+    while current_date <= end_date:
+        dates.append(current_date)
+        julian_day = date_to_julian_day(current_date, timezone_offset)
+
+        # Calculate sunrise and sunset for each twilight definition
+        for twilight, elevation in twilight_angles.items():
+            try:
+                sunrise_time = sunrise(
+                    latitude, longitude, timezone_offset, julian_day, elevation
+                )
+                sunset_time = sunset(
+                    latitude, longitude, timezone_offset, julian_day, elevation
+                )
+
+                results[f"{twilight}_sunrise"].append(sunrise_time)
+                results[f"{twilight}_sunset"].append(sunset_time)
+
+            except (ValueError, ZeroDivisionError):
+                # Handle cases where sun doesn't rise/set (polar regions)
+                results[f"{twilight}_sunrise"].append(None)
+                results[f"{twilight}_sunset"].append(None)
+
+        current_date += timedelta(days=1)
+
+    # Create DataFrame
+    data = {"date": dates}
+    data.update(results)
+
+    return pd.DataFrame(data)
