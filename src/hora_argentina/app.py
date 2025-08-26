@@ -294,7 +294,7 @@ def main():
     st.subheader("Créditos")
     st.write("""
     - Datos de mapas por [ArgenMap](https://ign-argentina.github.io/argenmap-web/#mapa)
-    - Calculadora de amanecer/anochecer por [SunriseSunset.io](https://sunrisesunset.io/)
+    - Calculadora de amanecer/anochecer basado en la [calculadora de la NOAA](https://gml.noaa.gov/grad/solcalc/calcdetails.html)
     - Otros recursos utilizados: 
         - [Streamlit](https://streamlit.io/)
         - [astropy](https://www.astropy.org/)

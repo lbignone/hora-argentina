@@ -37,26 +37,10 @@ pip install -e .
 streamlit run src/hora_argentina/app.py
 ```
 
-### Ejemplos de uso programático
-
-```python
-from hora_argentina import get_sunrise_sunset_year
-from hora_argentina.plot_plotly import plot_sunrise_sunset_curves
-
-# Obtener datos de amanecer/anochecer para Buenos Aires
-lat, lon = -34.6118, -58.3960
-data = get_sunrise_sunset_year(lat, lon, "America/Argentina/Buenos_Aires")
-
-# Generar gráfico
-fig = plot_sunrise_sunset_curves(data, "Buenos Aires")
-fig.show()
-```
-
 ## 🛠️ Dependencias principales
 
 - **Streamlit**: Interfaz web interactiva
 - **Folium**: Mapas interactivos
-- **SunriseSunset.io**: API para obtener datos de amanecer y anochecer
 - **Plotly**: Visualizaciones interactivas
 - **GeoPy**: Geocodificación y servicios geográficos
 
