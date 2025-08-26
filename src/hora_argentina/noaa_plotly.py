@@ -271,6 +271,9 @@ def plot_yearly_sun_times(
         # width=1000,
         height=450,
         margin=dict(b=0),  # Extra margin for legend
+        xaxis_fixedrange=True,
+        yaxis_fixedrange=True,
+        dragmode=False,
     )
 
     # Add secondary y-axis with time labels
