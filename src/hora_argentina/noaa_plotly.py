@@ -539,7 +539,9 @@ def plot_day_length_variation(df, title=None, show_figure=True):
         fig.update_layout(
             title=dict(text=title, x=0.5, font=dict(size=18)),
             xaxis=dict(title="Fecha"),
-            yaxis=dict(title="Duración del Día (horas)", tickmode="linear", tick0=8, dtick=1),
+            yaxis=dict(
+                title="Duración del Día (horas)", tickmode="linear", tick0=8, dtick=1
+            ),
             # template="plotly_white",
             # width=1000,
             # height=500,
