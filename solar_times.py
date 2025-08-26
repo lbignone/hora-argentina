@@ -19,7 +19,6 @@ from hora_argentina.noaa_solar_calculations import (
     equation_of_time,
     geom_mean_anom_sun,
     geom_mean_long_sun,
-    hour_angle,
     julian_century,
     mean_obliq_ecliptic,
     obliq_corr,
@@ -87,7 +86,7 @@ def decimal_hours_to_time_string(decimal_hours):
     return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
 
 
-def load_config(config_file="config.txt"):
+def load_config(config_file="config.json"):
     """Load configuration from JSON file."""
     try:
         with open(config_file, "r") as f:
@@ -145,7 +144,7 @@ def validate_config(config):
 def main():
     """Main function to calculate and display solar times."""
     # Check for command line argument for config file
-    config_file = sys.argv[1] if len(sys.argv) > 1 else "config.txt"
+    config_file = sys.argv[1] if len(sys.argv) > 1 else "config.json"
 
     # Load and validate configuration
     config = load_config(config_file)
@@ -184,9 +183,6 @@ def main():
     var_y_value = var_y(jc)
     sun_decl = sun_declination(jc)
 
-    # Calculate hour angle (using standard solar elevation of -0.833°)
-    hour_angle_value = hour_angle(latitude, jc, -0.833)
-
     # Calculate equation of time
     eq_time = equation_of_time(jc)
 
@@ -221,7 +217,6 @@ def main():
     print(f"Obliq Corr:              {obliq_correction:.6f}°")
     print(f"Var Y:                   {var_y_value:.8f}")
     print(f"Sun Declination:         {sun_decl:.6f}°")
-    print(f"Hour Angle:              {hour_angle_value:.6f}°")
     print(f"Equation of Time:        {eq_time:.6f} minutes")
     print()
     print("Solar Times:")

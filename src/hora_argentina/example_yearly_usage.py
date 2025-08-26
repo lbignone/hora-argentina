@@ -1,139 +1,68 @@
 #!/usr/bin/env python3
 """
-Example usage of the yearly sunrise/sunset API function.
+Example usage of the yearly_sun_times_dataframe function
+
+This script demonstrates how to use the function to get a full year of
+sunrise and sunset times for all twilight definitions.
 """
 
-from datetime import date
-
-from hora_argentina import get_sunrise_sunset_year
+from hora_argentina.noaa_solar_calculations import yearly_sun_times_dataframe
 
 
 def main():
-    """Demonstrate the yearly sunrise/sunset API function."""
+    """Demonstrate the yearly sun times dataframe function."""
 
-    print("🌅 Yearly Sunrise/Sunset API Demo")
+    print("🌅 Yearly Sun Times DataFrame Example")
     print("=" * 50)
 
-    # New York coordinates
-    ny_lat, ny_lng = 40.7128, -74.0060
-    ny_timezone = "America/New_York"
+    # Example coordinates for Buenos Aires, Argentina
+    latitude = -34.6118
+    longitude = -58.3960
+    timezone_offset = -3  # Argentina standard time (UTC-3)
 
-    # Buenos Aires coordinates
-    ba_lat, ba_lng = -34.6037, -58.3816
-    ba_timezone = "America/Argentina/Buenos_Aires"
+    # Generate the dataframe for current year (default)
+    df = yearly_sun_times_dataframe(latitude, longitude, timezone_offset)
 
-    # Get current year
-    current_year = date.today().year
+    print(f"Coordinates: {latitude}°, {longitude}°")
+    print(f"Timezone: UTC{timezone_offset:+d}")
+    print(f"Year: {df.iloc[0]['date'].year} (current year)")
+    print(f"Total days: {len(df)}")
+    print()
 
-    print(f"\n1. Getting full year data for NYC ({current_year}):")
-    df_ny = get_sunrise_sunset_year(ny_lat, ny_lng, current_year, ny_timezone)
-    print(f"   📊 Dataset: {len(df_ny)} days ({df_ny.shape[1]} columns)")
+    # Show the first few rows
+    print("First 5 days of the year:")
+    print(df.head().to_string(index=False))
+    print()
 
-    # Find extremes
-    longest = df_ny.loc[df_ny["day_length_seconds"].idxmax()]
-    shortest = df_ny.loc[df_ny["day_length_seconds"].idxmin()]
+    # Show summer solstice (Dec 21 in Southern Hemisphere)
+    summer_solstice = df[
+        df["date"].apply(lambda x: x.strftime("%m-%d") == "12-21")
+    ].iloc[0]
+    print("Summer Solstice (December 21st):")
+    for col in df.columns:
+        print(f"  {col}: {summer_solstice[col]}")
+    print()
 
-    print(
-        f"   🌞 Longest day: {longest['date'].strftime('%B %d')} ({longest['day_length']})"
-    )
-    print(
-        f"   🌚 Shortest day: {shortest['date'].strftime('%B %d')} ({shortest['day_length']})"
-    )
-    print(
-        f"   📏 Difference: {(longest['day_length_seconds'] - shortest['day_length_seconds']) / 3600:.1f} hours"
-    )
+    # Show winter solstice (Jun 21 in Southern Hemisphere)
+    winter_solstice = df[
+        df["date"].apply(lambda x: x.strftime("%m-%d") == "06-21")
+    ].iloc[0]
+    print("Winter Solstice (June 21st):")
+    for col in df.columns:
+        print(f"  {col}: {winter_solstice[col]}")
+    print()
 
-    print(f"\n2. Comparing NYC vs Buenos Aires ({current_year}):")
-    df_ba = get_sunrise_sunset_year(ba_lat, ba_lng, current_year, ba_timezone)
+    print("Available columns:")
+    for i, col in enumerate(df.columns, 1):
+        print(f"  {i}. {col}")
 
-    # Compare winter solstice (opposite hemispheres)
-    ny_winter = df_ny.loc[df_ny["day_length_seconds"].idxmin()]
-    ba_summer = df_ba.loc[df_ba["day_length_seconds"].idxmax()]
+    print("\nTwilight Definitions:")
+    print("  - Official: Sun's center at horizon (-0.833°)")
+    print("  - Civil: Sun 6° below horizon (-6°)")
+    print("  - Nautical: Sun 12° below horizon (-12°)")
+    print("  - Astronomical: Sun 18° below horizon (-18°)")
 
-    print(
-        f"   NYC winter solstice: {ny_winter['date'].strftime('%Y-%m-%d')} - {ny_winter['day_length']}"
-    )
-    print(
-        f"   BA summer solstice:  {ba_summer['date'].strftime('%Y-%m-%d')} - {ba_summer['day_length']}"
-    )
-
-    print("\n3. Seasonal analysis (NYC):")
-    seasonal_stats = (
-        df_ny.groupby("season")
-        .agg({"day_length_seconds": ["mean", "min", "max"], "date": "count"})
-        .round(1)
-    )
-
-    for season in ["Winter", "Spring", "Summer", "Autumn"]:
-        if season in seasonal_stats.index:
-            stats = seasonal_stats.loc[season]
-            avg_hours = stats[("day_length_seconds", "mean")] / 3600
-            min_hours = stats[("day_length_seconds", "min")] / 3600
-            max_hours = stats[("day_length_seconds", "max")] / 3600
-            days = stats[("date", "count")]
-            print(
-                f"   {season:>6}: {days:>2} days, avg {avg_hours:4.1f}h (range: {min_hours:4.1f}h - {max_hours:4.1f}h)"
-            )
-
-    print("\n4. Testing leap year handling (2024):")
-    if current_year != 2024:
-        df_leap = get_sunrise_sunset_year(ny_lat, ny_lng, 2024, ny_timezone)
-        feb_29 = df_leap[df_leap["date"].dt.strftime("%m-%d") == "02-29"]
-        print(f"   2024 has {len(df_leap)} days")
-        if not feb_29.empty:
-            print(
-                f"   ✅ Feb 29 included: {feb_29.iloc[0]['date'].strftime('%Y-%m-%d')}"
-            )
-            print(
-                f"      Sunrise: {feb_29.iloc[0]['sunrise']}, Sunset: {feb_29.iloc[0]['sunset']}"
-            )
-        else:
-            print("   ❌ Feb 29 missing")
-    else:
-        print(f"   Current year {current_year} is a leap year!")
-        feb_29 = df_ny[df_ny["date"].dt.strftime("%m-%d") == "02-29"]
-        if not feb_29.empty:
-            print(
-                f"   ✅ Feb 29 data: Sunrise {feb_29.iloc[0]['sunrise']}, Sunset {feb_29.iloc[0]['sunset']}"
-            )
-
-    print(f"\n5. Monthly daylight progression (NYC {current_year}):")
-    monthly_avg = (
-        df_ny.groupby(df_ny["date"].dt.month)["day_length_seconds"].mean() / 3600
-    )
-    months = [
-        "Jan",
-        "Feb",
-        "Mar",
-        "Apr",
-        "May",
-        "Jun",
-        "Jul",
-        "Aug",
-        "Sep",
-        "Oct",
-        "Nov",
-        "Dec",
-    ]
-
-    print("   Month | Avg Hours | Visual")
-    print("   ------|-----------|" + "-" * 20)
-    max_hours = monthly_avg.max()
-    for i, hours in enumerate(monthly_avg, 1):
-        bar_length = int((hours / max_hours) * 20)
-        bar = "█" * bar_length + "░" * (20 - bar_length)
-        print(f"   {months[i - 1]:>5} | {hours:7.1f}h | {bar}")
-
-    print("\n6. Data structure information:")
-    print(f"   Columns: {list(df_ny.columns)}")
-    print("   Extra analysis columns added:")
-    print("   - day_length_seconds: Numeric day length for calculations")
-    print("   - day_of_year: Day number (1-365/366)")
-    print("   - season: Calculated season based on hemisphere")
-
-    print("\n✅ Yearly demo completed successfully!")
-    print("💡 Use the returned DataFrame for your own analysis and visualizations!")
-    print("\nPowered by SunriseSunset.io - https://sunrisesunset.io/")
+    print("\nNote: All times are returned as decimal hours (e.g., 5.75 = 5:45 AM)")
 
 
 if __name__ == "__main__":
