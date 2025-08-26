@@ -68,7 +68,9 @@ def decimal_hours_to_time_string(decimal_hours):
     return f"{hours:02d}:{minutes:02d}"
 
 
-def plot_yearly_sun_times(df, title=None, show_figure=False, traces=None):
+def plot_yearly_sun_times(
+    df, title=None, subtitle=None, show_figure=False, traces=None
+):
     """
     Plot sunrise and sunset times for all twilight definitions throughout the year.
 
@@ -248,7 +250,8 @@ def plot_yearly_sun_times(df, title=None, show_figure=False, traces=None):
     # Customize layout
 
     fig.update_layout(
-        title=dict(text=title, x=0.5, font=dict(size=18)),
+        # title=dict(text=title, x=0.5, font=dict(size=18)),
+        title=dict(text=title, subtitle=dict(text=subtitle)),
         xaxis=dict(title="Fecha", tickangle=45),
         yaxis=dict(
             title="Hora (horas)", tickmode="linear", tick0=0, dtick=2, range=[0, 24]
