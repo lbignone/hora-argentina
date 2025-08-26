@@ -13,11 +13,8 @@ from geopy.geocoders import Nominatim
 from streamlit_folium import st_folium
 
 from hora_argentina import __version__
-from hora_argentina.from_api import (
-    get_sunrise_sunset_year,
-    get_sunrise_sunset_year_dual_timezone,
-)
-from hora_argentina.plot_plotly import plot_sunrise_sunset_curves
+from hora_argentina.noaa_plotly import plot_yearly_sun_times
+from hora_argentina.noaa_solar_calculations import yearly_sun_times_dataframe
 
 
 def main():
@@ -198,21 +195,19 @@ def main():
         coords = st.session_state.last_clicked_coordinate
 
         with st.spinner("Obteniendo información de amanecer/anochecer..."):
-            df_3 = get_sunrise_sunset_year(
-                coords["lat"], coords["lng"], year=2025, timezone="Etc/GMT+3"
+            df_3 = yearly_sun_times_dataframe(
+                coords["lat"], coords["lng"], timezone_offset=-3
             )
-            df_4 = get_sunrise_sunset_year(
-                coords["lat"], coords["lng"], year=2025, timezone="Etc/GMT+4"
+            df_4 = yearly_sun_times_dataframe(
+                coords["lat"], coords["lng"], timezone_offset=-4
             )
-
-            df_summer = get_sunrise_sunset_year_dual_timezone(
-                latitude=coords["lat"],
-                longitude=coords["lng"],
-                year=2025,
-                summer_timezone="Etc/GMT+3",
-                winter_timezone="Etc/GMT+4",
-                summer_start_date="2025-9-07",
-                winter_start_date="2025-04-06",
+            df_dual = yearly_sun_times_dataframe(
+                coords["lat"],
+                coords["lng"],
+                timezone_offset=-4,
+                summer_timezone_offset=-3,
+                summer_start_date=(9, 7),
+                summer_end_date=(4, 6),
             )
 
         if coords["address"]:
@@ -229,35 +224,33 @@ def main():
             ["UTC -3 (actual)", "UTC -4 (propuesto)", "UTC -4 con horario de verano"]
         )
 
+        traces = ["civil_sunrise", "civil_sunset", "solar_noon"]
+
         with tab1:
-            df_plot, fig, config = plot_sunrise_sunset_curves(
-                df_3, title=title + " (UTC -3)"
-            )
+            fig = plot_yearly_sun_times(df_3, title=title + " (UTC -3)", traces=traces)
 
             st.write(
                 "💡 **Deslizece sobre la figura para visualizar fechas y horas en detalle**"
             )
-            st.plotly_chart(fig, use_container_width=True, config=config)
+            st.plotly_chart(fig, use_container_width=True)
 
         with tab2:
-            df_plot, fig, config = plot_sunrise_sunset_curves(
-                df_4, title=title + " (UTC -4)"
-            )
+            fig = plot_yearly_sun_times(df_4, title=title + " (UTC -4)", traces=traces)
 
             st.write(
                 "💡 **Deslizece sobre la figura para visualizar fechas y horas en detalle**"
             )
-            st.plotly_chart(fig, use_container_width=True, config=config)
+            st.plotly_chart(fig, use_container_width=True)
 
         with tab3:
-            df_plot, fig, config = plot_sunrise_sunset_curves(
-                df_summer, title=title + " (UTC -4 con horario de verano)"
+            fig = plot_yearly_sun_times(
+                df_dual, title=title + " (UTC -4 con horario de verano)", traces=traces
             )
 
             st.write(
                 "💡 **Deslizece sobre la figura para visualizar fechas y horas en detalle**"
             )
-            st.plotly_chart(fig, use_container_width=True, config=config)
+            st.plotly_chart(fig, use_container_width=True)
 
     st.subheader("ℹ️ Información adicional")
     st.write("""
