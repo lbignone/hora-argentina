@@ -9,7 +9,9 @@ import plotly.graph_objects as go
 
 def decimal_hours_to_time_string(decimal_hours):
     """Convert decimal hours to HH:MM format, rounded to the closest minute."""
-    if decimal_hours is None:
+    import math
+
+    if decimal_hours is None or math.isnan(decimal_hours):
         return "N/A"
 
     # Handle negative hours (wrap around midnight)
@@ -38,6 +40,7 @@ def plot_yearly_sun_times(df, title=None, show_figure=True):
     This function creates an interactive Plotly visualization showing:
     - Sunrise times (solid lines) and sunset times (dashed lines)
     - All four twilight definitions: Official, Civil, Nautical, and Astronomical
+    - Solar noon times (orange solid line) when available in the data
     - Time axis in both decimal hours and HH:MM format
     - Color-coded lines for easy identification
 
@@ -74,8 +77,8 @@ def plot_yearly_sun_times(df, title=None, show_figure=True):
         "official": "#f56565",  # Red (sun visible)
     }
 
-    # Add traces for each twilight type
-    twilight_types = ["astronomical", "nautical", "civil", "official"]
+    # Add traces for each twilight type, grouping sunrise and sunset together
+    twilight_types = ["official", "civil", "nautical", "astronomical"]
 
     for twilight in twilight_types:
         sunrise_col = f"{twilight}_sunrise"
@@ -98,9 +101,9 @@ def plot_yearly_sun_times(df, title=None, show_figure=True):
                     name=f"{twilight.title()} Sunrise",
                     line=dict(color=colors[twilight]),
                     mode="lines",
+                    legendgroup=twilight,
                     customdata=sunrise_times_formatted,
                     hovertemplate=f"<b>{twilight.title()} Sunrise</b><br>"
-                    + "Date: %{x}<br>"
                     + "Time: %{customdata}<br>"
                     + "<extra></extra>",
                 )
@@ -114,13 +117,34 @@ def plot_yearly_sun_times(df, title=None, show_figure=True):
                     name=f"{twilight.title()} Sunset",
                     line=dict(color=colors[twilight], dash="dash"),
                     mode="lines",
+                    legendgroup=twilight,
                     customdata=sunset_times_formatted,
                     hovertemplate=f"<b>{twilight.title()} Sunset</b><br>"
-                    + "Date: %{x}<br>"
                     + "Time: %{customdata}<br>"
                     + "<extra></extra>",
                 )
             )
+
+    # Add solar noon trace if available
+    if "solar_noon" in df.columns:
+        solar_noon_times_formatted = [
+            decimal_hours_to_time_string(time) for time in df["solar_noon"]
+        ]
+
+        fig.add_trace(
+            go.Scatter(
+                x=df["date"],
+                y=df["solar_noon"],
+                name="Solar Noon",
+                line=dict(color="#f7931e", width=3),  # Orange color, thicker line
+                mode="lines",
+                legendgroup="solar_noon",
+                customdata=solar_noon_times_formatted,
+                hovertemplate="<b>Solar Noon</b><br>"
+                + "Time: %{customdata}<br>"
+                + "<extra></extra>",
+            )
+        )
 
     # Customize layout
 
@@ -131,14 +155,14 @@ def plot_yearly_sun_times(df, title=None, show_figure=True):
             title="Time (hours)", tickmode="linear", tick0=0, dtick=2, range=[0, 24]
         ),
         legend=dict(
-            orientation="v",
-            yanchor="top",
-            y=0.99,
-            xanchor="left",
-            x=1.01,
-            bgcolor="rgba(255, 255, 255, 0.8)",
-            bordercolor="rgba(0, 0, 0, 0.2)",
-            borderwidth=1,
+            orientation="h",
+            yanchor="bottom",
+            y=0.02,
+            xanchor="right",
+            x=1.0,
+            # bgcolor="rgba(255, 255, 255, 0.8)",
+            # bordercolor="rgba(0, 0, 0, 0.2)",
+            # borderwidth=1,
         ),
         hovermode="x unified",
         template="plotly_white",
@@ -215,11 +239,14 @@ def plot_twilight_comparison(df, date_range=None, title=None, show_figure=True):
         "official": "#f56565",
     }
 
-    twilight_types = ["astronomical", "nautical", "civil", "official"]
+    twilight_types = ["official", "civil", "nautical", "astronomical"]
 
-    # Add sunrise traces
+    # Add traces grouped by twilight type (sunrise and sunset together)
     for twilight in twilight_types:
         sunrise_col = f"{twilight}_sunrise"
+        sunset_col = f"{twilight}_sunset"
+
+        # Add sunrise trace
         if sunrise_col in plot_df.columns:
             # Prepare formatted time strings
             sunrise_times_formatted = [
@@ -230,7 +257,7 @@ def plot_twilight_comparison(df, date_range=None, title=None, show_figure=True):
                 go.Scatter(
                     x=plot_df["date"],
                     y=plot_df[sunrise_col],
-                    name=f"{twilight.title()}",
+                    name=f"{twilight.title()} Sunrise",
                     line=dict(color=colors[twilight]),
                     mode="lines+markers",
                     marker=dict(size=4),
@@ -245,9 +272,7 @@ def plot_twilight_comparison(df, date_range=None, title=None, show_figure=True):
                 col=1,
             )
 
-    # Add sunset traces
-    for twilight in twilight_types:
-        sunset_col = f"{twilight}_sunset"
+        # Add sunset trace
         if sunset_col in plot_df.columns:
             # Prepare formatted time strings
             sunset_times_formatted = [
@@ -258,12 +283,11 @@ def plot_twilight_comparison(df, date_range=None, title=None, show_figure=True):
                 go.Scatter(
                     x=plot_df["date"],
                     y=plot_df[sunset_col],
-                    name=f"{twilight.title()}",
-                    line=dict(color=colors[twilight]),
+                    name=f"{twilight.title()} Sunset",
+                    line=dict(color=colors[twilight], dash="dash"),
                     mode="lines+markers",
                     marker=dict(size=4),
                     legendgroup=twilight,
-                    showlegend=False,  # Don't duplicate legend
                     customdata=sunset_times_formatted,
                     hovertemplate=f"<b>{twilight.title()} Sunset</b><br>"
                     + "Date: %{x}<br>"
@@ -273,6 +297,52 @@ def plot_twilight_comparison(df, date_range=None, title=None, show_figure=True):
                 row=2,
                 col=1,
             )
+
+    # Add solar noon trace if available (shown on both subplots for reference)
+    if "solar_noon" in plot_df.columns:
+        solar_noon_times_formatted = [
+            decimal_hours_to_time_string(time) for time in plot_df["solar_noon"]
+        ]
+
+        # Add to sunrise subplot
+        fig.add_trace(
+            go.Scatter(
+                x=plot_df["date"],
+                y=plot_df["solar_noon"],
+                name="Solar Noon",
+                line=dict(color="#f7931e", width=2, dash="dot"),  # Orange dotted line
+                mode="lines",
+                legendgroup="solar_noon",
+                customdata=solar_noon_times_formatted,
+                hovertemplate="<b>Solar Noon</b><br>"
+                + "Date: %{x}<br>"
+                + "Time: %{customdata}<br>"
+                + "<extra></extra>",
+                showlegend=True,
+            ),
+            row=1,
+            col=1,
+        )
+
+        # Add to sunset subplot (same trace, no legend)
+        fig.add_trace(
+            go.Scatter(
+                x=plot_df["date"],
+                y=plot_df["solar_noon"],
+                name="Solar Noon",
+                line=dict(color="#f7931e", width=2, dash="dot"),
+                mode="lines",
+                legendgroup="solar_noon",
+                customdata=solar_noon_times_formatted,
+                hovertemplate="<b>Solar Noon</b><br>"
+                + "Date: %{x}<br>"
+                + "Time: %{customdata}<br>"
+                + "<extra></extra>",
+                showlegend=False,  # Don't duplicate in legend
+            ),
+            row=2,
+            col=1,
+        )
 
     # Update layout
     if title is None:

@@ -199,7 +199,16 @@ def decimal_hours_to_time_string(decimal_hours):
     return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
 
 
-def yearly_sun_times_dataframe(latitude, longitude, timezone_offset, year=None):
+def yearly_sun_times_dataframe(
+    latitude,
+    longitude,
+    timezone_offset,
+    year=None,
+    summer_timezone_offset=None,
+    winter_timezone_offset=None,
+    summer_start_date=None,
+    summer_end_date=None,
+):
     """
     Calculate sunrise and sunset times for all twilight definitions for a full year.
 
@@ -210,15 +219,30 @@ def yearly_sun_times_dataframe(latitude, longitude, timezone_offset, year=None):
     longitude : float
         Longitude in degrees (positive for East, negative for West)
     timezone_offset : float
-        Timezone offset from UTC in hours (e.g., -3 for Argentina standard time)
+        Default timezone offset from UTC in hours (e.g., -3 for Argentina standard time)
+        Used when seasonal offsets are not specified or outside seasonal date ranges
     year : int, optional
         Year for calculations (default: current year)
+    summer_timezone_offset : float, optional
+        Summer timezone offset from UTC in hours (e.g., -2 for daylight saving time)
+        If None, uses timezone_offset for all dates
+    winter_timezone_offset : float, optional
+        Winter timezone offset from UTC in hours (e.g., -3 for standard time)
+        If None, uses timezone_offset as the winter offset
+    summer_start_date : tuple, optional
+        (month, day) tuple for start of summer time (e.g., (10, 1) for October 1st)
+        If None, seasonal timezone changes are not applied
+    summer_end_date : tuple, optional
+        (month, day) tuple for end of summer time (e.g., (3, 15) for March 15th)
+        If None, seasonal timezone changes are not applied
 
     Returns:
     --------
     pandas.DataFrame
         DataFrame with columns:
         - date: Date for each day of the year
+        - timezone_offset: Timezone offset used for each date
+        - solar_noon: Solar noon time (decimal hours)
         - official_sunrise: Official sunrise time (decimal hours)
         - official_sunset: Official sunset time (decimal hours)
         - civil_sunrise: Civil twilight sunrise time (decimal hours)
@@ -232,6 +256,44 @@ def yearly_sun_times_dataframe(latitude, longitude, timezone_offset, year=None):
     # Use current year if none specified
     if year is None:
         year = date.today().year
+
+    # Helper function to determine timezone offset for a given date
+    def get_timezone_offset_for_date(current_date):
+        # If essential seasonal parameters are not provided, use default timezone_offset
+        if (
+            summer_timezone_offset is None
+            or summer_start_date is None
+            or summer_end_date is None
+        ):
+            return timezone_offset
+
+        # Use timezone_offset as winter_timezone_offset if not explicitly provided
+        effective_winter_offset = (
+            winter_timezone_offset
+            if winter_timezone_offset is not None
+            else timezone_offset
+        )
+
+        start_month, start_day = summer_start_date
+        end_month, end_day = summer_end_date
+
+        # Create date objects for comparison (using current year)
+        summer_start = date(year, start_month, start_day)
+        summer_end = date(year, end_month, end_day)
+
+        # Handle case where summer period crosses year boundary (e.g., Oct-Mar in Southern Hemisphere)
+        if summer_start > summer_end:
+            # Summer period spans across New Year (e.g., Oct 1 to Mar 15)
+            if current_date >= summer_start or current_date <= summer_end:
+                return summer_timezone_offset
+            else:
+                return effective_winter_offset
+        else:
+            # Summer period within same year (e.g., Mar 15 to Oct 1 in Northern Hemisphere)
+            if summer_start <= current_date <= summer_end:
+                return summer_timezone_offset
+            else:
+                return effective_winter_offset
 
     # Twilight definitions (solar elevation angles in degrees)
     twilight_angles = {
@@ -247,6 +309,8 @@ def yearly_sun_times_dataframe(latitude, longitude, timezone_offset, year=None):
 
     # Initialize lists to store results
     dates = []
+    timezone_offsets = []
+    solar_noons = []
     results = {f"{twilight}_sunrise": [] for twilight in twilight_angles.keys()}
     results.update({f"{twilight}_sunset": [] for twilight in twilight_angles.keys()})
 
@@ -254,16 +318,25 @@ def yearly_sun_times_dataframe(latitude, longitude, timezone_offset, year=None):
     current_date = start_date
     while current_date <= end_date:
         dates.append(current_date)
-        julian_day = date_to_julian_day(current_date, timezone_offset)
+
+        # Determine timezone offset for this date
+        current_timezone_offset = get_timezone_offset_for_date(current_date)
+        timezone_offsets.append(current_timezone_offset)
+
+        julian_day = date_to_julian_day(current_date, current_timezone_offset)
+
+        # Calculate solar noon for this date
+        solar_noon_time = solar_noon(longitude, current_timezone_offset, julian_day)
+        solar_noons.append(solar_noon_time)
 
         # Calculate sunrise and sunset for each twilight definition
         for twilight, elevation in twilight_angles.items():
             try:
                 sunrise_time = sunrise(
-                    latitude, longitude, timezone_offset, julian_day, elevation
+                    latitude, longitude, current_timezone_offset, julian_day, elevation
                 )
                 sunset_time = sunset(
-                    latitude, longitude, timezone_offset, julian_day, elevation
+                    latitude, longitude, current_timezone_offset, julian_day, elevation
                 )
 
                 results[f"{twilight}_sunrise"].append(sunrise_time)
@@ -277,7 +350,11 @@ def yearly_sun_times_dataframe(latitude, longitude, timezone_offset, year=None):
         current_date += timedelta(days=1)
 
     # Create DataFrame
-    data = {"date": dates}
+    data = {
+        "date": dates,
+        "timezone_offset": timezone_offsets,
+        "solar_noon": solar_noons,
+    }
     data.update(results)
 
     return pd.DataFrame(data)
