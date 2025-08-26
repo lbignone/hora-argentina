@@ -1,5 +1,7 @@
 # 🇦🇷 Hora Argentina - Simulador de Husos Horarios
 
+[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://simulador-husos-horarios-argentina.streamlit.app)
+
 Una aplicación web interactiva desarrollada con Streamlit para explorar los efectos de diferentes esquemas de huso horario en Argentina, visualizando cómo cambian los horarios de amanecer y anochecer en cualquier punto del país a lo largo del año.
 
 ## 📖 Contexto
