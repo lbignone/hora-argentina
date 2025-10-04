@@ -301,7 +301,7 @@ def main():
         - [plotly](https://plotly.com/python/)
         - [pandas](https://pandas.pydata.org/)
         - [folium](https://python-visualization.github.io/folium/)
-        - 🫣 Un poco de ChatGTP y Sonnet4
+        - Un poco de ChatGTP y Sonnet4
     """)
 
     st.subheader("Desarrollado por:")
