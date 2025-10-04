@@ -25,7 +25,7 @@ def main():
         layout="centered",
     )
 
-    st.title("🇦🇷 Simulador de horas de amacer/anochecer")
+    st.title("🇦🇷 Simulador de horas de amanecer/anochecer")
     st.write(f"Version: {__version__}")
 
     st.write("""
@@ -39,7 +39,7 @@ def main():
     # Add Argentina map with time zones
     st.subheader("🗺️ Ubicación")
     st.write(
-        "💡 **Haga click en el mapa para seleccionar una ubicación ó ingrese una dirección**"
+        "💡 **Haga click en el mapa para seleccionar una ubicación o ingrese una dirección**"
     )
 
     # Initialize session state for storing last clicked coordinate and zoom
@@ -230,7 +230,7 @@ def main():
             fig = plot_yearly_sun_times(df_3, title=title + " (UTC -3)", traces=traces)
 
             st.write(
-                "💡 **Deslizece sobre la figura para visualizar fechas y horas en detalle**"
+                "💡 **Deslícese sobre la figura para visualizar fechas y horas en detalle**"
             )
             st.plotly_chart(fig, use_container_width=True)
 
@@ -238,7 +238,7 @@ def main():
             fig = plot_yearly_sun_times(df_4, title=title + " (UTC -4)", traces=traces)
 
             st.write(
-                "💡 **Deslizece sobre la figura para visualizar fechas y horas en detalle**"
+                "💡 **Deslícese sobre la figura para visualizar fechas y horas en detalle**"
             )
             st.plotly_chart(fig, use_container_width=True)
 
@@ -248,7 +248,7 @@ def main():
             )
 
             st.write(
-                "💡 **Deslizece sobre la figura para visualizar fechas y horas en detalle**"
+                "💡 **Deslícese sobre la figura para visualizar fechas y horas en detalle**"
             )
             st.plotly_chart(fig, use_container_width=True)
 
