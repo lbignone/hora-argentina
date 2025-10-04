@@ -21,11 +21,11 @@ def main():
     """Main Streamlit app function."""
     st.set_page_config(
         page_title="Simulador de horas de amacer/anochecer",
-        page_icon="🇦🇷",
+        page_icon="☀️",
         layout="centered",
     )
 
-    st.title("🇦🇷 Simulador de horas de amanecer/anochecer")
+    st.title("☀️ Simulador de horas de amanecer/anochecer")
     st.write(f"Version: {__version__}")
 
     st.write("""
@@ -37,9 +37,9 @@ def main():
     """)
 
     # Add Argentina map with time zones
-    st.subheader("🗺️ Ubicación")
+    st.subheader("Ubicación")
     st.write(
-        "💡 **Haga click en el mapa para seleccionar una ubicación o ingrese una dirección**"
+        "**Haga click en el mapa para seleccionar una ubicación o ingrese una dirección**"
     )
 
     # Initialize session state for storing last clicked coordinate and zoom
@@ -139,7 +139,7 @@ def main():
 
         # Create uniform popup content
         popup_content = (
-            f"📍 Location<br>Lat: {coords['lat']:.4f}<br>Long: {coords['lng']:.4f}"
+            f"Location<br>Lat: {coords['lat']:.4f}<br>Long: {coords['lng']:.4f}"
         )
         if coords.get("address"):
             popup_content = f"📍 {coords['address']}<br>Lat: {coords['lat']:.4f}<br>Long: {coords['lng']:.4f}"
@@ -188,7 +188,7 @@ def main():
         st.session_state.last_clicked_coordinate = new_coord
         st.rerun()  # Refresh to show the new marker
 
-    st.subheader("🌅 Gráfico de amanecer y anochecer")
+    st.subheader("Gráfico de amanecer y anochecer")
 
     # Display last clicked coordinate
     if st.session_state.last_clicked_coordinate:
@@ -211,13 +211,13 @@ def main():
             )
 
         if coords["address"]:
-            title = f"📌 {coords['address']}"
+            title = f"{coords['address']}"
         else:
-            title = f"📌 Lat: {coords['lat']:.4f}, Long: {coords['lng']:.4f}"
+            title = f"Lat: {coords['lat']:.4f}, Long: {coords['lng']:.4f}"
 
     with st.spinner("Generando gráficos..."):
         st.write(
-            "💡 **Elija una opción de esquema de huso horario para ver el correspondiente gráfico**"
+            "**Elija una opción de esquema de huso horario para ver el correspondiente gráfico**"
         )
 
         tab1, tab2, tab3 = st.tabs(
@@ -230,7 +230,7 @@ def main():
             fig = plot_yearly_sun_times(df_3, title=title + " (UTC -3)", traces=traces)
 
             st.write(
-                "💡 **Deslícese sobre la figura para visualizar fechas y horas en detalle**"
+                "**Deslícese sobre la figura para visualizar fechas y horas en detalle**"
             )
             st.plotly_chart(fig, use_container_width=True)
 
@@ -238,7 +238,7 @@ def main():
             fig = plot_yearly_sun_times(df_4, title=title + " (UTC -4)", traces=traces)
 
             st.write(
-                "💡 **Deslícese sobre la figura para visualizar fechas y horas en detalle**"
+                "**Deslícese sobre la figura para visualizar fechas y horas en detalle**"
             )
             st.plotly_chart(fig, use_container_width=True)
 
@@ -248,7 +248,7 @@ def main():
             )
 
             st.write(
-                "💡 **Deslícese sobre la figura para visualizar fechas y horas en detalle**"
+                "**Deslícese sobre la figura para visualizar fechas y horas en detalle**"
             )
             st.plotly_chart(fig, use_container_width=True)
 
@@ -265,7 +265,7 @@ def main():
 
     st.info(
         """El amanecer y el anochecer civil son los momentos en que el Sol se encuentra 6 grados por debajo del horizonte. Si el Sol se encuentra por encima de esa altura, se considera que hay suficiente claridad atmosférica como para ver bien y realizar actividades al aire libre sin necesidad de encender luces.""",
-        icon="💡",
+        icon="!
     )
 
     st.info(
