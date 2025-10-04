@@ -265,7 +265,7 @@ def main():
 
     st.info(
         """El amanecer y el anochecer civil son los momentos en que el Sol se encuentra 6 grados por debajo del horizonte. Si el Sol se encuentra por encima de esa altura, se considera que hay suficiente claridad atmosférica como para ver bien y realizar actividades al aire libre sin necesidad de encender luces.""",
-        icon="!",
+        icon="☀️",
     )
 
     st.info(
